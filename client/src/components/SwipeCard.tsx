@@ -47,7 +47,7 @@ export default function SwipeCard({ user, onSwipe }: SwipeCardProps) {
       className="absolute w-full cursor-grab active:cursor-grabbing"
     >
       <motion.div
-        className="absolute inset-0 bg-primary opacity-0"
+        className="absolute inset-0 bg-[#4F46E5] opacity-0"
         style={{
           opacity: 0,
           right: "100%",
@@ -57,7 +57,7 @@ export default function SwipeCard({ user, onSwipe }: SwipeCardProps) {
         }}
       />
       <motion.div
-        className="absolute inset-0 bg-destructive opacity-0"
+        className="absolute inset-0 bg-[#FF6B9D] opacity-0"
         style={{
           opacity: 0,
           left: "100%",
@@ -66,20 +66,20 @@ export default function SwipeCard({ user, onSwipe }: SwipeCardProps) {
           opacity: exitX < 0 ? 0.3 : 0,
         }}
       />
-      <Card className="w-full aspect-[3/4] overflow-hidden">
+      <Card className="w-full aspect-[3/4] overflow-hidden card-gradient">
         <CardContent className="p-0 h-full relative">
           <img
             src={user.photoUrl}
             alt={user.name}
             className="w-full h-full object-cover"
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4">
             <div className="flex items-center gap-2">
               <h3 className="text-white text-2xl font-bold">
                 {user.name}, {user.age}
               </h3>
               {user.instagramHandle && (
-                <Badge variant="secondary" className="flex items-center gap-1">
+                <Badge variant="secondary" className="flex items-center gap-1 bg-[#4F46E5]/20">
                   <SiInstagram className="w-4 h-4" />
                   {user.instagramHandle}
                 </Badge>
@@ -89,7 +89,7 @@ export default function SwipeCard({ user, onSwipe }: SwipeCardProps) {
             <p className="text-white/80">{user.hostelStatus}</p>
             <div className="flex flex-wrap gap-2 mt-2">
               {user.hobbies.map((hobby) => (
-                <Badge key={hobby} variant="outline" className="bg-white/10">
+                <Badge key={hobby} variant="outline" className="bg-white/10 border-[#FF6B9D]/30">
                   {hobby}
                 </Badge>
               ))}
