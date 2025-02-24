@@ -14,13 +14,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { loginMutation, registerMutation, user } = useAuth();
+
+  // Redirect if already logged in
+  if (user) {
+    setLocation('/');
+    return null;
+  }
 
   const form = useForm({
     resolver: zodResolver(insertUserSchema),
@@ -36,39 +43,27 @@ export default function AuthPage() {
     },
   });
 
-  const auth = useMutation({
-    mutationFn: async (data: any) => {
-      const endpoint = isLogin ? '/api/login' : '/api/register';
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Authentication failed');
+  const onSubmit = async (data: any) => {
+    try {
+      if (isLogin) {
+        await loginMutation.mutateAsync({
+          username: data.username,
+          password: data.password,
+        });
+        setLocation('/');
+      } else {
+        await registerMutation.mutateAsync(data);
+        setLocation('/');
       }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: isLogin ? "Welcome back!" : "Account created successfully!",
-        description: isLogin ? "You've been logged in." : "You can now use your account.",
-      });
-      setLocation('/');
-    },
-    onError: (error) => {
+    } catch (error) {
+      console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: (error as Error).message || "Authentication failed",
         variant: "destructive",
       });
-    },
-  });
+    }
+  };
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
@@ -107,7 +102,7 @@ export default function AuthPage() {
 
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit((data) => auth.mutate(data))}
+                onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-4"
               >
                 <FormField
@@ -241,9 +236,9 @@ export default function AuthPage() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={auth.isPending}
+                  disabled={loginMutation.isPending || registerMutation.isPending}
                 >
-                  {auth.isPending
+                  {loginMutation.isPending || registerMutation.isPending
                     ? "Please wait..."
                     : isLogin
                     ? "Log In"
