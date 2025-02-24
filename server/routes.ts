@@ -1,12 +1,25 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import multer from "multer";
+import path from "path";
 import { storage } from "./storage";
 import { insertUserSchema, insertMemeSchema, insertConfessionSchema, insertQuestionSchema, insertChatMessageSchema } from "@shared/schema";
 
 interface ChatClient extends WebSocket {
   userId?: number;
 }
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: 'public/images/memes',
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, 'meme-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  })
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Users
@@ -40,14 +53,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(memes);
   });
 
-  app.post("/api/memes", async (req, res) => {
-    const parsed = insertMemeSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ message: parsed.error });
-      return;
+  app.post("/api/memes", upload.single('image'), async (req, res) => {
+    try {
+      const memeData = {
+        userId: parseInt(req.body.userId),
+        caption: req.body.caption || null,
+        tags: req.body.tags ? JSON.parse(req.body.tags) : [],
+        imageUrl: req.file ? `/images/memes/${req.file.filename}` : null
+      };
+
+      const parsed = insertMemeSchema.safeParse(memeData);
+      if (!parsed.success) {
+        res.status(400).json({ message: parsed.error });
+        return;
+      }
+
+      const meme = await storage.createMeme(parsed.data);
+      res.json(meme);
+    } catch (error) {
+      console.error('Error creating meme:', error);
+      res.status(500).json({ message: 'Error creating meme' });
     }
-    const meme = await storage.createMeme(parsed.data);
-    res.json(meme);
   });
 
   // Confessions

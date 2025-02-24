@@ -56,7 +56,7 @@ export class MemStorage implements IStorage {
         hostelStatus: "Hostel A",
         hobbies: ["Coding", "Dance", "Photography"],
         instagramHandle: "priya.codes",
-        photoUrl: "/ai2.png",
+        photoUrl: "/images/ai2.png",
       },
       {
         username: "arya_patel",
@@ -67,7 +67,7 @@ export class MemStorage implements IStorage {
         hostelStatus: "Day Scholar",
         hobbies: ["AI/ML", "Music", "Reading"],
         instagramHandle: "arya.tech",
-        photoUrl: "/777398564146974381 3.png",
+        photoUrl: "/images/777398564146974381 3.png",
       },
       {
         username: "neil_shah",
@@ -77,7 +77,7 @@ export class MemStorage implements IStorage {
         branch: "Computer Engineering",
         hostelStatus: "Hostel B",
         hobbies: ["Web Development", "Gaming", "Basketball"],
-        photoUrl: "/boy coding.jpeg",
+        photoUrl: "/images/boy coding.jpeg",
       },
       {
         username: "zara_khan",
@@ -88,7 +88,7 @@ export class MemStorage implements IStorage {
         hostelStatus: "Hostel C",
         hobbies: ["Machine Learning", "Yoga", "Writing"],
         instagramHandle: "zara.ai",
-        photoUrl: "/ai photo.png",
+        photoUrl: "/images/ai photo.png",
       }
     ];
 
