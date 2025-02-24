@@ -1,0 +1,49 @@
+"Design a vibrant, intuitive UI/UX for JP, a college-centric friend-making app, prioritizing seamless social interactions and safety. Follow these guidelines:
+
+1. Core Structure
+
+Default Home Screen: Implement a Tinder-like swipe interface as the primary screen. Display user cards with name, age, branch, hostel/localite status, and hobbies. Use large, playful buttons (✓/✗) for swiping, with a floating match-notification icon (top-right).
+
+Navigation: Use a 5-tab bottom bar: Home (swipe), Confessions, Memes, Q&A, and Profile.
+
+2. Key Features
+
+Instagram Integration: Add a small Instagram badge (📸) next to profile names. On tap, display the handle in a subtle popup without embedding feeds.
+
+Mandatory Face Detection:
+
+Trigger during signup (full-screen overlay with playful animations guiding users to align their face).
+
+Re-trigger for sensitive actions (e.g., posting confessions, video calls) using a minimal modal with camera guidelines.
+
+Dedicated Memes Feed: Create a TikTok-style vertical scroll feed under a ‘Memes’ tab. Allow anonymous posting with tagging (e.g., #CollegeHumor). Include upvote/downvote counters and a ‘Share’ button.
+
+3. Visual Style
+
+Color Palette: Youthful and energetic—use gradients of teal (#2DD4BF) and coral (#FF6B6B) for CTAs, with soft white/gray backgrounds. Accent safety features (block/report) in red (#FF3B30).
+
+Typography: Rounded sans-serif fonts (e.g., Poppins) for readability. Use bold headers (20pt) and clean body text (14pt).
+
+Icons: Outline-style icons for tabs, filled states for active selections.
+
+4. Safety & Anonymity
+
+Highlight anonymity toggles (e.g., masks for confessions, Q&A).
+
+Add persistent block/report buttons on profiles and posts.
+
+5. Interactive Elements
+
+Confessions/Q&A: Card-based feeds with blurred avatars. Let users toggle anonymity when commenting.
+
+Profile Setup: Multi-step forms with progress bars. Use chips for selecting hobbies/interests.
+
+Deliverables:
+
+Wireframes for core screens (swipe, memes feed, profile setup).
+
+High-fidelity mockups emphasizing color hierarchy and interactions.
+
+Micro-animations for swiping, face detection, and match notifications.
+
+Tone: Friendly and approachable, with subtle humor (e.g., meme-inspired loading screens). Avoid clutter—prioritize whitespace and clear CTAs.
