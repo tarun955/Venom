@@ -5,6 +5,7 @@ import multer from "multer";
 import path from "path";
 import { storage } from "./storage";
 import { insertUserSchema, insertMemeSchema, insertConfessionSchema, insertQuestionSchema, insertChatMessageSchema } from "@shared/schema";
+import { setupAuth } from "./auth";
 
 interface ChatClient extends WebSocket {
   userId?: number;
@@ -22,13 +23,24 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication
+  setupAuth(app);
+
+  // Protected route middleware
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    next();
+  };
+
   // Users
-  app.get("/api/users", async (req, res) => {
+  app.get("/api/users", requireAuth, async (req, res) => {
     const users = await storage.getUsers();
     res.json(users);
   });
 
-  app.get("/api/users/:id", async (req, res) => {
+  app.get("/api/users/:id", requireAuth, async (req, res) => {
     const user = await storage.getUser(parseInt(req.params.id));
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -37,7 +49,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(user);
   });
 
-  app.post("/api/users", async (req, res) => {
+  app.post("/api/users", requireAuth, async (req, res) => {
     const parsed = insertUserSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ message: parsed.error });
@@ -48,12 +60,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Memes
-  app.get("/api/memes", async (req, res) => {
+  app.get("/api/memes", requireAuth, async (req, res) => {
     const memes = await storage.getMemes();
     res.json(memes);
   });
 
-  app.post("/api/memes", upload.single('image'), async (req, res) => {
+  app.post("/api/memes", upload.single('image'), requireAuth, async (req, res) => {
     try {
       const memeData = {
         userId: parseInt(req.body.userId),
@@ -77,10 +89,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Updated upvote/downvote routes
-  app.post("/api/memes/:id/:voteType", async (req, res) => {
+  app.post("/api/memes/:id/:voteType", requireAuth, async (req, res) => {
     const { id } = req.params;
     const voteType = req.params.voteType as 'upvote' | 'downvote';
-    const userId = 1; // TODO: Replace with actual user ID from session
+    const userId = req.user.id; // Assuming req.user is populated by authentication middleware
+
 
     if (voteType !== 'upvote' && voteType !== 'downvote') {
       res.status(400).json({ message: "Invalid vote type" });
@@ -103,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add reject match route
-  app.post("/api/matches/reject", async (req, res) => {
+  app.post("/api/matches/reject", requireAuth, async (req, res) => {
     const { user1Id, user2Id } = req.body;
     await storage.rejectMatch(user1Id, user2Id);
     res.json({ success: true });
@@ -111,12 +124,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Confessions
-  app.get("/api/confessions", async (req, res) => {
+  app.get("/api/confessions", requireAuth, async (req, res) => {
     const confessions = await storage.getConfessions();
     res.json(confessions);
   });
 
-  app.post("/api/confessions", async (req, res) => {
+  app.post("/api/confessions", requireAuth, async (req, res) => {
     const parsed = insertConfessionSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ message: parsed.error });
@@ -127,12 +140,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Questions
-  app.get("/api/questions", async (req, res) => {
+  app.get("/api/questions", requireAuth, async (req, res) => {
     const questions = await storage.getQuestions();
     res.json(questions);
   });
 
-  app.post("/api/questions", async (req, res) => {
+  app.post("/api/questions", requireAuth, async (req, res) => {
     const parsed = insertQuestionSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ message: parsed.error });
@@ -143,19 +156,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Matches
-  app.post("/api/matches", async (req, res) => {
+  app.post("/api/matches", requireAuth, async (req, res) => {
     const { user1Id, user2Id } = req.body;
     const match = await storage.createMatch(user1Id, user2Id);
     res.json(match);
   });
 
-  app.get("/api/matches/:userId", async (req, res) => {
+  app.get("/api/matches/:userId", requireAuth, async (req, res) => {
     const matches = await storage.getMatches(parseInt(req.params.userId));
     res.json(matches);
   });
 
   // Add new chat routes
-  app.get("/api/chat/:matchId", async (req, res) => {
+  app.get("/api/chat/:matchId", requireAuth, async (req, res) => {
     const messages = await storage.getChatMessages(parseInt(req.params.matchId));
     res.json(messages);
   });
@@ -176,6 +189,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
 
           case 'chat':
+            if (!ws.userId) {
+              ws.send(JSON.stringify({ type: 'error', error: 'Authentication required' }));
+              return;
+            }
+
             const parsed = insertChatMessageSchema.safeParse({
               matchId: message.matchId,
               senderId: ws.userId,
