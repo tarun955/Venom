@@ -20,6 +20,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getUsers(): Promise<User[]>;
+  updateUser(id: number, user: InsertUser): Promise<User>; // Added updateUser method
 
   // Memes
   createMeme(meme: InsertMeme): Promise<Meme>;
@@ -163,7 +164,7 @@ export class MemStorage implements IStorage {
       questions: 1,
       matches: 1,
       chatMessages: 1,
-      memeVotes:1
+      memeVotes: 1
     };
 
     // Initialize test data
@@ -347,6 +348,25 @@ export class MemStorage implements IStorage {
     };
     this.memes.set(memeId, updatedMeme);
     return updatedMeme;
+  }
+
+  async updateUser(id: number, updateData: InsertUser): Promise<User> {
+    const existingUser = this.users.get(id);
+    if (!existingUser) {
+      throw new Error('User not found');
+    }
+
+    const updatedUser: User = {
+      ...existingUser,
+      ...updateData,
+      id, // Ensure ID remains unchanged
+      password: existingUser.password, // Keep existing password
+      username: existingUser.username, // Keep existing username
+      instagramHandle: updateData.instagramHandle || null,
+    };
+
+    this.users.set(id, updatedUser);
+    return updatedUser;
   }
 }
 

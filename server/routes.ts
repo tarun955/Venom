@@ -59,6 +59,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(user);
   });
 
+  // Update user profile route
+  app.post("/api/users/:id", requireAuth, async (req, res) => {
+    const userId = parseInt(req.params.id);
+    // Check if the user is updating their own profile
+    if (req.user.id !== userId) {
+      return res.status(403).json({ message: "Unauthorized to update this profile" });
+    }
+
+    const parsed = insertUserSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ message: parsed.error });
+      return;
+    }
+
+    try {
+      const user = await storage.updateUser(userId, parsed.data);
+      res.json(user);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(500).json({ message: 'Error updating user profile' });
+    }
+  });
+
+
   // Memes
   app.get("/api/memes", requireAuth, async (req, res) => {
     const memes = await storage.getMemes();

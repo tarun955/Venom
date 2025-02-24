@@ -30,15 +30,15 @@ export default function Profile() {
   const form = useForm({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
-      username: user?.username || "",
+      username: "",
       password: "",
-      name: user?.name || "",
-      age: user?.age || 18,
-      branch: user?.branch || "",
-      hostelStatus: user?.hostelStatus || "",
-      hobbies: user?.hobbies || [],
-      instagramHandle: user?.instagramHandle || "",
-      photoUrl: user?.photoUrl || "",
+      name: "",
+      age: 18,
+      branch: "",
+      hostelStatus: "",
+      hobbies: [],
+      instagramHandle: "",
+      photoUrl: "",
     },
   });
 
@@ -62,12 +62,16 @@ export default function Profile() {
 
   const updateProfile = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch('/api/users', {
+      // Ensure we're passing the current user's ID
+      const response = await fetch(`/api/users/${user?.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          id: user?.id // Include the user ID
+        }),
       });
 
       if (!response.ok) {
@@ -77,7 +81,7 @@ export default function Profile() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
@@ -126,7 +130,7 @@ export default function Profile() {
                   <AvatarImage src={photoUrl} alt="Profile" />
                 ) : (
                   <AvatarFallback className="text-4xl">
-                    {form.getValues("name")?.[0]?.toUpperCase() || "?"}
+                    {user?.name?.[0]?.toUpperCase() || "?"}
                   </AvatarFallback>
                 )}
               </Avatar>
@@ -153,23 +157,11 @@ export default function Profile() {
             </div>
             <div className="text-center">
               <h1 className="text-2xl font-bold">
-                {form.getValues("name") || "Complete Your Profile"}
+                {user?.name || "Complete Your Profile"}
               </h1>
               <p className="text-muted-foreground">
-                {form.getValues("branch") || "Set your branch and interests"}
+                {user?.branch || "Set your branch and interests"}
               </p>
-            </div>
-
-            {/* Stats */}
-            <div className="flex gap-12 mt-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-sm text-muted-foreground">Matches</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-sm text-muted-foreground">Messages</p>
-              </div>
             </div>
 
             <div className="flex gap-4 mt-6">
