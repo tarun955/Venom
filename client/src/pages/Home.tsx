@@ -4,6 +4,7 @@ import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SwipeCard from "@/components/SwipeCard";
 import type { User } from "@shared/schema";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -44,7 +45,38 @@ export default function Home() {
   return (
     <div className="min-h-screen p-4 pb-20">
       <div className="relative h-[70vh] max-w-md mx-auto">
-        <SwipeCard user={users[currentIndex]} onSwipe={handleSwipe} />
+        <AnimatePresence>
+          {[...Array(3)].map((_, i) => {
+            const userIndex = currentIndex + i;
+            if (userIndex >= users.length) return null;
+
+            return (
+              <motion.div
+                key={users[userIndex].id}
+                initial={{ scale: 1 - i * 0.05, y: i * 10, zIndex: -i }}
+                animate={{ scale: 1 - i * 0.05, y: i * 10, zIndex: -i }}
+                exit={{ x: 0 }}
+                className="absolute top-0 left-0 right-0"
+                style={{ filter: `brightness(${1 - i * 0.15})` }}
+              >
+                {i === 0 ? (
+                  <SwipeCard
+                    user={users[userIndex]}
+                    onSwipe={handleSwipe}
+                  />
+                ) : (
+                  <div className="pointer-events-none">
+                    <SwipeCard
+                      user={users[userIndex]}
+                      onSwipe={() => {}}
+                    />
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+
         <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
           <Button
             size="lg"
