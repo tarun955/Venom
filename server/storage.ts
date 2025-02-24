@@ -38,6 +38,72 @@ export class MemStorage implements IStorage {
   private matches: Map<number, Match>;
   private currentIds: { [key: string]: number };
 
+  private initializeTestData() {
+    // Add some test users
+    const testUsers: InsertUser[] = [
+      {
+        username: "john_doe",
+        password: "test123",
+        name: "John Doe",
+        age: 20,
+        branch: "Computer Science",
+        hostelStatus: "Hostel A",
+        hobbies: ["Coding", "Gaming", "Music"],
+        instagramHandle: "john.codes",
+        photoUrl: "https://picsum.photos/id/1/400/600",
+      },
+      {
+        username: "jane_smith",
+        password: "test123",
+        name: "Jane Smith",
+        age: 19,
+        branch: "Electronics",
+        hostelStatus: "Day Scholar",
+        hobbies: ["Photography", "Dance", "Reading"],
+        instagramHandle: "jane.clicks",
+        photoUrl: "https://picsum.photos/id/2/400/600",
+      },
+      {
+        username: "mike_wilson",
+        password: "test123",
+        name: "Mike Wilson",
+        age: 21,
+        branch: "Mechanical",
+        hostelStatus: "Hostel B",
+        hobbies: ["Basketball", "Robotics", "Painting"],
+        photoUrl: "https://picsum.photos/id/3/400/600",
+      },
+      {
+        username: "sara_jones",
+        password: "test123",
+        name: "Sara Jones",
+        age: 20,
+        branch: "Chemical",
+        hostelStatus: "Hostel C",
+        hobbies: ["Chess", "Writing", "Volleyball"],
+        instagramHandle: "sara.writes",
+        photoUrl: "https://picsum.photos/id/4/400/600",
+      },
+      {
+        username: "alex_kumar",
+        password: "test123",
+        name: "Alex Kumar",
+        age: 22,
+        branch: "Civil",
+        hostelStatus: "Day Scholar",
+        hobbies: ["Singing", "Debating", "Swimming"],
+        photoUrl: "https://picsum.photos/id/5/400/600",
+      },
+    ];
+
+    // Create test users
+    testUsers.forEach((user) => {
+      const id = this.currentIds.users++;
+      const newUser: User = { ...user, id };
+      this.users.set(id, newUser);
+    });
+  }
+
   constructor() {
     this.users = new Map();
     this.memes = new Map();
@@ -51,6 +117,9 @@ export class MemStorage implements IStorage {
       questions: 1,
       matches: 1
     };
+
+    // Initialize test data
+    this.initializeTestData();
   }
 
   async getUser(id: number): Promise<User | undefined> {
