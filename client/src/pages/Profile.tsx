@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,28 +15,50 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Camera, MessageSquare } from "lucide-react";
+import { Camera, MessageSquare, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 export default function Profile() {
   const { toast } = useToast();
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const { user, logoutMutation } = useAuth();
+  const [, setLocation] = useLocation();
 
   const form = useForm({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
-      username: "",
+      username: user?.username || "",
       password: "",
-      name: "",
-      age: 18,
-      branch: "",
-      hostelStatus: "",
-      hobbies: [],
-      instagramHandle: "",
-      photoUrl: "",
+      name: user?.name || "",
+      age: user?.age || 18,
+      branch: user?.branch || "",
+      hostelStatus: user?.hostelStatus || "",
+      hobbies: user?.hobbies || [],
+      instagramHandle: user?.instagramHandle || "",
+      photoUrl: user?.photoUrl || "",
     },
   });
+
+  // Update form when user data is available
+  useEffect(() => {
+    if (user) {
+      setPhotoUrl(user.photoUrl);
+      form.reset({
+        username: user.username,
+        password: "", // Don't set the password
+        name: user.name,
+        age: user.age,
+        branch: user.branch,
+        hostelStatus: user.hostelStatus,
+        hobbies: user.hobbies,
+        instagramHandle: user.instagramHandle || "",
+        photoUrl: user.photoUrl,
+      });
+    }
+  }, [user, form]);
 
   const updateProfile = useMutation({
     mutationFn: async (data: any) => {
@@ -76,6 +98,19 @@ export default function Profile() {
       const url = URL.createObjectURL(file);
       setPhotoUrl(url);
       form.setValue("photoUrl", url);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      setLocation('/auth');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to logout. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -141,6 +176,10 @@ export default function Profile() {
               <Button variant="outline" className="gap-2">
                 <MessageSquare className="w-4 h-4" />
                 Message
+              </Button>
+              <Button variant="destructive" className="gap-2" onClick={handleLogout}>
+                <LogOut className="w-4 h-4" />
+                Logout
               </Button>
             </div>
           </div>
