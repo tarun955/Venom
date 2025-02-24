@@ -29,7 +29,7 @@ export interface IStorage {
   // Matches
   createMatch(user1Id: number, user2Id: number): Promise<Match>;
   getMatches(userId: number): Promise<Match[]>;
-
+  
   // Chat messages
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getChatMessages(matchId: number): Promise<ChatMessage[]>;
@@ -48,66 +48,89 @@ export class MemStorage implements IStorage {
     // Add some test users
     const testUsers: InsertUser[] = [
       {
-        username: "john_doe",
+        username: "priya_sharma",
         password: "test123",
-        name: "John Doe",
+        name: "Priya Sharma",
         age: 20,
         branch: "Computer Science",
         hostelStatus: "Hostel A",
-        hobbies: ["Coding", "Gaming", "Music"],
-        instagramHandle: "john.codes",
-        photoUrl: "https://picsum.photos/id/1/400/600",
+        hobbies: ["Coding", "Dance", "Photography"],
+        instagramHandle: "priya.codes",
+        photoUrl: "/ai2.png",
       },
       {
-        username: "jane_smith",
+        username: "arya_patel",
         password: "test123",
-        name: "Jane Smith",
+        name: "Arya Patel",
         age: 19,
         branch: "Electronics",
         hostelStatus: "Day Scholar",
-        hobbies: ["Photography", "Dance", "Reading"],
-        instagramHandle: "jane.clicks",
-        photoUrl: "https://picsum.photos/id/2/400/600",
+        hobbies: ["AI/ML", "Music", "Reading"],
+        instagramHandle: "arya.tech",
+        photoUrl: "/777398564146974381 3.png",
       },
       {
-        username: "mike_wilson",
+        username: "neil_shah",
         password: "test123",
-        name: "Mike Wilson",
+        name: "Neil Shah",
         age: 21,
-        branch: "Mechanical",
+        branch: "Computer Engineering",
         hostelStatus: "Hostel B",
-        hobbies: ["Basketball", "Robotics", "Painting"],
-        photoUrl: "https://picsum.photos/id/3/400/600",
+        hobbies: ["Web Development", "Gaming", "Basketball"],
+        photoUrl: "/boy coding.jpeg",
       },
       {
-        username: "sara_jones",
+        username: "zara_khan",
         password: "test123",
-        name: "Sara Jones",
+        name: "Zara Khan",
         age: 20,
-        branch: "Chemical",
+        branch: "Data Science",
         hostelStatus: "Hostel C",
-        hobbies: ["Chess", "Writing", "Volleyball"],
-        instagramHandle: "sara.writes",
-        photoUrl: "https://picsum.photos/id/4/400/600",
-      },
-      {
-        username: "alex_kumar",
-        password: "test123",
-        name: "Alex Kumar",
-        age: 22,
-        branch: "Civil",
-        hostelStatus: "Day Scholar",
-        hobbies: ["Singing", "Debating", "Swimming"],
-        photoUrl: "https://picsum.photos/id/5/400/600",
-      },
+        hobbies: ["Machine Learning", "Yoga", "Writing"],
+        instagramHandle: "zara.ai",
+        photoUrl: "/ai photo.png",
+      }
     ];
 
     // Create test users
     testUsers.forEach((user) => {
       const id = this.currentIds.users++;
-      const newUser: User = { ...user, id };
+      const newUser: User = { 
+        ...user,
+        id,
+        instagramHandle: user.instagramHandle || null,
+      };
       this.users.set(id, newUser);
     });
+
+    // Create some initial matches and messages for testing chat
+    const match = {
+      id: this.currentIds.matches++,
+      user1Id: 1,
+      user2Id: 2,
+      timestamp: new Date()
+    };
+    this.matches.set(match.id, match);
+
+    // Add some test messages
+    const messages = [
+      {
+        id: this.currentIds.chatMessages++,
+        matchId: match.id,
+        senderId: 1,
+        content: "Hey! I saw we both like coding!",
+        timestamp: new Date(Date.now() - 3600000)
+      },
+      {
+        id: this.currentIds.chatMessages++,
+        matchId: match.id,
+        senderId: 2,
+        content: "Yes! What languages do you work with?",
+        timestamp: new Date(Date.now() - 3000000)
+      }
+    ];
+
+    messages.forEach(msg => this.chatMessages.set(msg.id, msg));
   }
 
   constructor() {
