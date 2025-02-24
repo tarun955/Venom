@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Camera, MessageSquare, UserPlus } from "lucide-react";
+import { Camera, MessageSquare } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 export default function Profile() {
+  const { toast } = useToast();
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const form = useForm({
@@ -34,9 +38,37 @@ export default function Profile() {
     },
   });
 
-  const onSubmit = (data: any) => {
-    console.log("Form submitted:", data);
-  };
+  const updateProfile = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -103,10 +135,6 @@ export default function Profile() {
                 <p className="text-2xl font-bold">0</p>
                 <p className="text-sm text-muted-foreground">Messages</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-sm text-muted-foreground">Connections</p>
-              </div>
             </div>
 
             <div className="flex gap-4 mt-6">
@@ -114,16 +142,12 @@ export default function Profile() {
                 <MessageSquare className="w-4 h-4" />
                 Message
               </Button>
-              <Button className="gap-2">
-                <UserPlus className="w-4 h-4" />
-                Connect
-              </Button>
             </div>
           </div>
 
           {/* Profile Form */}
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit((data) => updateProfile.mutate(data))} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -199,10 +223,34 @@ export default function Profile() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="hobbies"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hobbies</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter hobbies (comma separated)"
+                          value={Array.isArray(field.value) ? field.value.join(", ") : ""}
+                          onChange={(e) => {
+                            const hobbies = e.target.value
+                              .split(",")
+                              .map((hobby) => hobby.trim())
+                              .filter((hobby) => hobby.length > 0);
+                            field.onChange(hobbies);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              <Button type="submit" className="w-full">
-                Save Profile
+              <Button type="submit" className="w-full" disabled={updateProfile.isPending}>
+                {updateProfile.isPending ? "Updating..." : "Save Profile"}
               </Button>
             </form>
           </Form>
