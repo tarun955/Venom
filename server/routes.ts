@@ -76,6 +76,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add upvote/downvote routes
+  app.post("/api/memes/:id/upvote", async (req, res) => {
+    const meme = await storage.upvoteMeme(parseInt(req.params.id));
+    if (!meme) {
+      res.status(404).json({ message: "Meme not found" });
+      return;
+    }
+    res.json(meme);
+  });
+
+  app.post("/api/memes/:id/downvote", async (req, res) => {
+    const meme = await storage.downvoteMeme(parseInt(req.params.id));
+    if (!meme) {
+      res.status(404).json({ message: "Meme not found" });
+      return;
+    }
+    res.json(meme);
+  });
+
+
   // Confessions
   app.get("/api/confessions", async (req, res) => {
     const confessions = await storage.getConfessions();

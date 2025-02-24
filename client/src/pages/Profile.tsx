@@ -15,10 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Camera, MessageSquare, UserPlus } from "lucide-react";
-import FaceDetection from "@/components/FaceDetection";
 
 export default function Profile() {
-  const [showFaceDetection, setShowFaceDetection] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const form = useForm({
@@ -37,12 +35,16 @@ export default function Profile() {
   });
 
   const onSubmit = (data: any) => {
-    setShowFaceDetection(true);
+    console.log("Form submitted:", data);
   };
 
-  const handleFaceDetected = () => {
-    // Submit form after face detection
-    console.log("Form submitted:", form.getValues());
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPhotoUrl(url);
+      form.setValue("photoUrl", url);
+    }
   };
 
   return (
@@ -61,13 +63,26 @@ export default function Profile() {
                   </AvatarFallback>
                 )}
               </Avatar>
-              <Button
-                size="icon"
-                className="absolute bottom-0 right-0 rounded-full"
-                onClick={() => setShowFaceDetection(true)}
-              >
-                <Camera className="w-4 h-4" />
-              </Button>
+              <div className="absolute bottom-0 right-0">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                  id="photo-upload"
+                />
+                <label htmlFor="photo-upload">
+                  <Button
+                    size="icon"
+                    className="rounded-full cursor-pointer"
+                    asChild
+                  >
+                    <div>
+                      <Camera className="w-4 h-4" />
+                    </div>
+                  </Button>
+                </label>
+              </div>
             </div>
             <div className="text-center">
               <h1 className="text-2xl font-bold">
@@ -191,12 +206,6 @@ export default function Profile() {
               </Button>
             </form>
           </Form>
-
-          <FaceDetection
-            isOpen={showFaceDetection}
-            onClose={() => setShowFaceDetection(false)}
-            onDetected={handleFaceDetected}
-          />
         </CardContent>
       </Card>
     </div>

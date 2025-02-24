@@ -17,6 +17,8 @@ export interface IStorage {
   // Memes
   createMeme(meme: InsertMeme): Promise<Meme>;
   getMemes(): Promise<Meme[]>;
+  upvoteMeme(id: number): Promise<Meme | undefined>;
+  downvoteMeme(id: number): Promise<Meme | undefined>;
 
   // Confessions
   createConfession(confession: InsertConfession): Promise<Confession>;
@@ -265,6 +267,24 @@ export class MemStorage implements IStorage {
         const bTime = b.timestamp?.getTime() || 0;
         return aTime - bTime;
       });
+  }
+
+  async upvoteMeme(id: number): Promise<Meme | undefined> {
+    const meme = this.memes.get(id);
+    if (!meme) return undefined;
+
+    const updatedMeme = { ...meme, upvotes: (meme.upvotes || 0) + 1 };
+    this.memes.set(id, updatedMeme);
+    return updatedMeme;
+  }
+
+  async downvoteMeme(id: number): Promise<Meme | undefined> {
+    const meme = this.memes.get(id);
+    if (!meme) return undefined;
+
+    const updatedMeme = { ...meme, downvotes: (meme.downvotes || 0) + 1 };
+    this.memes.set(id, updatedMeme);
+    return updatedMeme;
   }
 }
 

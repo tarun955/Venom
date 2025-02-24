@@ -61,8 +61,6 @@ export default function Memes() {
       const formData = new FormData();
       formData.append("userId", data.userId.toString());
       formData.append("caption", data.caption || "");
-
-      // Convert tags array to JSON string
       formData.append("tags", JSON.stringify(data.tags || []));
 
       if (selectedImage) {
@@ -94,6 +92,28 @@ export default function Memes() {
       toast({
         title: "Error",
         description: "Failed to upload meme. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const voteMeme = useMutation({
+    mutationFn: async ({ id, voteType }: { id: number; voteType: 'upvote' | 'downvote' }) => {
+      const res = await fetch(`/api/memes/${id}/${voteType}`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to ${voteType} meme`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/memes"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to vote. Please try again.",
         variant: "destructive",
       });
     },
@@ -224,11 +244,19 @@ export default function Memes() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => voteMeme.mutate({ id: meme.id, voteType: 'upvote' })}
+                    >
                       <ArrowBigUp className="w-5 h-5 mr-1" />
                       {meme.upvotes || 0}
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => voteMeme.mutate({ id: meme.id, voteType: 'downvote' })}
+                    >
                       <ArrowBigDown className="w-5 h-5 mr-1" />
                       {meme.downvotes || 0}
                     </Button>
