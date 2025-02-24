@@ -13,23 +13,23 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getUsers(): Promise<User[]>;
-  
+
   // Memes
   createMeme(meme: InsertMeme): Promise<Meme>;
   getMemes(): Promise<Meme[]>;
-  
+
   // Confessions
   createConfession(confession: InsertConfession): Promise<Confession>;
   getConfessions(): Promise<Confession[]>;
-  
+
   // Questions
   createQuestion(question: InsertQuestion): Promise<Question>;
   getQuestions(): Promise<Question[]>;
-  
+
   // Matches
   createMatch(user1Id: number, user2Id: number): Promise<Match>;
   getMatches(userId: number): Promise<Match[]>;
-  
+
   // Chat messages
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getChatMessages(matchId: number): Promise<ChatMessage[]>;
@@ -56,7 +56,7 @@ export class MemStorage implements IStorage {
         hostelStatus: "Hostel A",
         hobbies: ["Coding", "Dance", "Photography"],
         instagramHandle: "priya.codes",
-        photoUrl: "/images/ai2.png",
+        photoUrl: "/assets/ai2.png",
       },
       {
         username: "arya_patel",
@@ -67,7 +67,7 @@ export class MemStorage implements IStorage {
         hostelStatus: "Day Scholar",
         hobbies: ["AI/ML", "Music", "Reading"],
         instagramHandle: "arya.tech",
-        photoUrl: "/images/777398564146974381 3.png",
+        photoUrl: "/assets/777398564146974381 3.png",
       },
       {
         username: "neil_shah",
@@ -77,7 +77,7 @@ export class MemStorage implements IStorage {
         branch: "Computer Engineering",
         hostelStatus: "Hostel B",
         hobbies: ["Web Development", "Gaming", "Basketball"],
-        photoUrl: "/images/boy coding.jpeg",
+        photoUrl: "/assets/boy coding.jpeg",
       },
       {
         username: "zara_khan",
@@ -88,14 +88,14 @@ export class MemStorage implements IStorage {
         hostelStatus: "Hostel C",
         hobbies: ["Machine Learning", "Yoga", "Writing"],
         instagramHandle: "zara.ai",
-        photoUrl: "/images/ai photo.png",
+        photoUrl: "/assets/ai photo.png",
       }
     ];
 
     // Create test users
     testUsers.forEach((user) => {
       const id = this.currentIds.users++;
-      const newUser: User = { 
+      const newUser: User = {
         ...user,
         id,
         instagramHandle: user.instagramHandle || null,
@@ -165,7 +165,11 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentIds.users++;
-    const user: User = { ...insertUser, id };
+    const user: User = {
+      ...insertUser,
+      id,
+      instagramHandle: insertUser.instagramHandle || null,
+    };
     this.users.set(id, user);
     return user;
   }
@@ -176,7 +180,14 @@ export class MemStorage implements IStorage {
 
   async createMeme(insertMeme: InsertMeme): Promise<Meme> {
     const id = this.currentIds.memes++;
-    const meme: Meme = { ...insertMeme, id, upvotes: 0, downvotes: 0 };
+    const meme: Meme = {
+      ...insertMeme,
+      id,
+      caption: insertMeme.caption || null,
+      tags: insertMeme.tags || null,
+      upvotes: 0,
+      downvotes: 0,
+    };
     this.memes.set(id, meme);
     return meme;
   }
@@ -187,10 +198,11 @@ export class MemStorage implements IStorage {
 
   async createConfession(insertConfession: InsertConfession): Promise<Confession> {
     const id = this.currentIds.confessions++;
-    const confession: Confession = { 
-      ...insertConfession, 
+    const confession: Confession = {
+      ...insertConfession,
       id,
-      timestamp: new Date()
+      isAnonymous: insertConfession.isAnonymous ?? true,
+      timestamp: new Date(),
     };
     this.confessions.set(id, confession);
     return confession;
@@ -205,7 +217,8 @@ export class MemStorage implements IStorage {
     const question: Question = {
       ...insertQuestion,
       id,
-      timestamp: new Date()
+      isAnonymous: insertQuestion.isAnonymous ?? true,
+      timestamp: new Date(),
     };
     this.questions.set(id, question);
     return question;
@@ -247,7 +260,11 @@ export class MemStorage implements IStorage {
   async getChatMessages(matchId: number): Promise<ChatMessage[]> {
     return Array.from(this.chatMessages.values())
       .filter(msg => msg.matchId === matchId)
-      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      .sort((a, b) => {
+        const aTime = a.timestamp?.getTime() || 0;
+        const bTime = b.timestamp?.getTime() || 0;
+        return aTime - bTime;
+      });
   }
 }
 
