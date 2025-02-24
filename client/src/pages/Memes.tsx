@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ArrowBigUp, ArrowBigDown, Share2, Upload, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -23,7 +23,6 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertMemeSchema } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Meme } from "@shared/schema";
@@ -53,6 +52,7 @@ export default function Memes() {
       setSelectedImage(file);
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
+      form.setValue("imageUrl", url);
     }
   };
 
@@ -60,13 +60,10 @@ export default function Memes() {
     mutationFn: async (data: any) => {
       const formData = new FormData();
       formData.append("userId", data.userId.toString());
-      formData.append("caption", data.caption);
+      formData.append("caption", data.caption || "");
 
-      // Convert comma-separated string to array and filter out empty values
-      const tags = data.tags.split(",")
-        .map((tag: string) => tag.trim())
-        .filter((tag: string) => tag.length > 0);
-      formData.append("tags", JSON.stringify(tags));
+      // Convert tags array to JSON string
+      formData.append("tags", JSON.stringify(data.tags || []));
 
       if (selectedImage) {
         formData.append("image", selectedImage);
@@ -76,6 +73,11 @@ export default function Memes() {
         method: "POST",
         body: formData,
       });
+
+      if (!res.ok) {
+        throw new Error("Failed to upload meme");
+      }
+
       return res.json();
     },
     onSuccess: () => {
@@ -87,6 +89,13 @@ export default function Memes() {
       form.reset();
       setSelectedImage(null);
       setPreviewUrl(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to upload meme. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -167,10 +176,13 @@ export default function Memes() {
                       <FormControl>
                         <Input
                           placeholder="funny, college, hostel (comma separated)"
-                          {...field}
-                          value={field.value ? field.value.join(", ") : ""}
+                          value={Array.isArray(field.value) ? field.value.join(", ") : ""}
                           onChange={(e) => {
-                            field.onChange(e.target.value.split(",").map(tag => tag.trim()).filter(tag => tag.length > 0));
+                            const tags = e.target.value
+                              .split(",")
+                              .map((tag) => tag.trim())
+                              .filter((tag) => tag.length > 0);
+                            field.onChange(tags);
                           }}
                         />
                       </FormControl>
@@ -196,7 +208,7 @@ export default function Memes() {
             <CardContent className="p-0">
               <img
                 src={meme.imageUrl}
-                alt={meme.caption}
+                alt={meme.caption || "Meme"}
                 className="w-full aspect-square object-cover"
               />
               <div className="p-4">
@@ -214,11 +226,11 @@ export default function Memes() {
                   <div className="flex items-center gap-4">
                     <Button variant="ghost" size="sm">
                       <ArrowBigUp className="w-5 h-5 mr-1" />
-                      {meme.upvotes}
+                      {meme.upvotes || 0}
                     </Button>
                     <Button variant="ghost" size="sm">
                       <ArrowBigDown className="w-5 h-5 mr-1" />
-                      {meme.downvotes}
+                      {meme.downvotes || 0}
                     </Button>
                   </div>
                   <Button variant="ghost" size="sm">
