@@ -46,7 +46,7 @@ export default function Chat() {
       }
     };
 
-    setSocket(socket);
+    setSocket(newSocket);
 
     return () => {
       newSocket.close();
