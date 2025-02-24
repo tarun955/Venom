@@ -43,7 +43,7 @@ export default function Memes() {
       userId: 1, // TODO: Replace with actual user ID
       imageUrl: "",
       caption: "",
-      tags: "",
+      tags: [],
     },
   });
 
@@ -61,7 +61,13 @@ export default function Memes() {
       const formData = new FormData();
       formData.append("userId", data.userId.toString());
       formData.append("caption", data.caption);
-      formData.append("tags", data.tags);
+
+      // Convert comma-separated string to array and filter out empty values
+      const tags = data.tags.split(",")
+        .map((tag: string) => tag.trim())
+        .filter((tag: string) => tag.length > 0);
+      formData.append("tags", JSON.stringify(tags));
+
       if (selectedImage) {
         formData.append("image", selectedImage);
       }
@@ -151,6 +157,7 @@ export default function Memes() {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="tags"
@@ -161,12 +168,17 @@ export default function Memes() {
                         <Input
                           placeholder="funny, college, hostel (comma separated)"
                           {...field}
+                          value={field.value ? field.value.join(", ") : ""}
+                          onChange={(e) => {
+                            field.onChange(e.target.value.split(",").map(tag => tag.trim()).filter(tag => tag.length > 0));
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <Button
                   type="submit"
                   className="w-full"
