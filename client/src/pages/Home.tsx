@@ -1,22 +1,43 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SwipeCard from "@/components/SwipeCard";
 import type { User } from "@shared/schema";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 
 export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { toast } = useToast();
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
 
+  const createMatch = useMutation({
+    mutationFn: async (data: { user1Id: number; user2Id: number }) => {
+      const res = await apiRequest("POST", "/api/matches", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/matches/1"] }); // TODO: Replace with actual user ID
+      toast({
+        title: "It's a match! 🎉",
+        description: "You can now chat with this person.",
+      });
+    },
+  });
+
   const handleSwipe = (direction: "left" | "right") => {
     if (direction === "right" && users) {
-      // Handle match
-      console.log("Match with:", users[currentIndex].name);
+      // Create a match when swiping right
+      createMatch.mutate({
+        user1Id: 1, // TODO: Replace with actual user ID
+        user2Id: users[currentIndex].id,
+      });
     }
     setCurrentIndex((prev) => prev + 1);
   };
