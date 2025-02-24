@@ -1,7 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertUserSchema, insertMemeSchema, insertConfessionSchema, insertQuestionSchema } from "@shared/schema";
+import { insertUserSchema, insertMemeSchema, insertConfessionSchema, insertQuestionSchema, insertChatMessageSchema } from "@shared/schema";
+
+interface ChatClient extends WebSocket {
+  userId?: number;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Users
@@ -89,6 +94,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(matches);
   });
 
+  // Add new chat routes
+  app.get("/api/chat/:matchId", async (req, res) => {
+    const messages = await storage.getChatMessages(parseInt(req.params.matchId));
+    res.json(messages);
+  });
+
   const httpServer = createServer(app);
+
+  // Initialize WebSocket server
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+
+  wss.on('connection', (ws: ChatClient) => {
+    ws.on('message', async (data: string) => {
+      try {
+        const message = JSON.parse(data);
+
+        switch (message.type) {
+          case 'auth':
+            ws.userId = message.userId;
+            break;
+
+          case 'chat':
+            const parsed = insertChatMessageSchema.safeParse({
+              matchId: message.matchId,
+              senderId: ws.userId,
+              content: message.content
+            });
+
+            if (!parsed.success) {
+              ws.send(JSON.stringify({ type: 'error', error: 'Invalid message format' }));
+              return;
+            }
+
+            const chatMessage = await storage.createChatMessage(parsed.data);
+
+            // Broadcast to all connected clients in the same match
+            wss.clients.forEach((client: ChatClient) => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: 'chat',
+                  message: chatMessage
+                }));
+              }
+            });
+            break;
+        }
+      } catch (error) {
+        console.error('WebSocket error:', error);
+        ws.send(JSON.stringify({ type: 'error', error: 'Internal server error' }));
+      }
+    });
+  });
+
   return httpServer;
 }

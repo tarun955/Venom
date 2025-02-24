@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Image, MessageCircle, HelpCircle, User } from "lucide-react";
+import { Home, Image, MessageCircle, HelpCircle, User, MessagesSquare } from "lucide-react";
 
 export default function BottomNav() {
   const [location] = useLocation();
@@ -9,6 +9,7 @@ export default function BottomNav() {
     { path: "/memes", icon: Image, label: "Memes" },
     { path: "/confessions", icon: MessageCircle, label: "Confessions" },
     { path: "/qa", icon: HelpCircle, label: "Q&A" },
+    { path: "/chat", icon: MessagesSquare, label: "Chat" },
     { path: "/profile", icon: User, label: "Profile" },
   ];
 

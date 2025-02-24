@@ -48,6 +48,14 @@ export const matches = pgTable("matches", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+export const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  matchId: integer("match_id").notNull(),
+  senderId: integer("sender_id").notNull(),
+  content: text("content").notNull(),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -79,13 +87,21 @@ export const insertQuestionSchema = createInsertSchema(questions).pick({
   isAnonymous: true,
 });
 
+export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({
+  matchId: true,
+  senderId: true,
+  content: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertMeme = z.infer<typeof insertMemeSchema>;
 export type InsertConfession = z.infer<typeof insertConfessionSchema>;
 export type InsertQuestion = z.infer<typeof insertQuestionSchema>;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Meme = typeof memes.$inferSelect;
 export type Confession = typeof confessions.$inferSelect;
 export type Question = typeof questions.$inferSelect;
 export type Match = typeof matches.$inferSelect;
+export type ChatMessage = typeof chatMessages.$inferSelect;

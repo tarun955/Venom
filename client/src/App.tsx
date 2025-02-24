@@ -8,6 +8,7 @@ import Profile from "@/pages/Profile";
 import Memes from "@/pages/Memes";
 import Confessions from "@/pages/Confessions";
 import QA from "@/pages/QA";
+import Chat from "@/pages/Chat";
 import BottomNav from "@/components/BottomNav";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
         <Route path="/memes" component={Memes} />
         <Route path="/confessions" component={Confessions} />
         <Route path="/qa" component={QA} />
+        <Route path="/chat" component={Chat} />
         <Route component={NotFound} />
       </Switch>
       <BottomNav />

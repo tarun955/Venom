@@ -1,9 +1,10 @@
-import { 
+import {
   type User, type InsertUser,
   type Meme, type InsertMeme,
   type Confession, type InsertConfession,
   type Question, type InsertQuestion,
-  type Match
+  type Match,
+  type ChatMessage, type InsertChatMessage
 } from "@shared/schema";
 
 export interface IStorage {
@@ -28,6 +29,10 @@ export interface IStorage {
   // Matches
   createMatch(user1Id: number, user2Id: number): Promise<Match>;
   getMatches(userId: number): Promise<Match[]>;
+
+  // Chat messages
+  createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  getChatMessages(matchId: number): Promise<ChatMessage[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -36,6 +41,7 @@ export class MemStorage implements IStorage {
   private confessions: Map<number, Confession>;
   private questions: Map<number, Question>;
   private matches: Map<number, Match>;
+  private chatMessages: Map<number, ChatMessage>;
   private currentIds: { [key: string]: number };
 
   private initializeTestData() {
@@ -110,12 +116,14 @@ export class MemStorage implements IStorage {
     this.confessions = new Map();
     this.questions = new Map();
     this.matches = new Map();
+    this.chatMessages = new Map();
     this.currentIds = {
       users: 1,
       memes: 1,
       confessions: 1,
       questions: 1,
-      matches: 1
+      matches: 1,
+      chatMessages: 1
     };
 
     // Initialize test data
@@ -200,6 +208,23 @@ export class MemStorage implements IStorage {
     return Array.from(this.matches.values()).filter(
       match => match.user1Id === userId || match.user2Id === userId
     );
+  }
+
+  async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
+    const id = this.currentIds.chatMessages++;
+    const message: ChatMessage = {
+      ...insertMessage,
+      id,
+      timestamp: new Date()
+    };
+    this.chatMessages.set(id, message);
+    return message;
+  }
+
+  async getChatMessages(matchId: number): Promise<ChatMessage[]> {
+    return Array.from(this.chatMessages.values())
+      .filter(msg => msg.matchId === matchId)
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
   }
 }
 
