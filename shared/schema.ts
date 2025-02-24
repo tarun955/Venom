@@ -25,6 +25,13 @@ export const memes = pgTable("memes", {
   downvotes: integer("downvotes").default(0),
 });
 
+export const memeVotes = pgTable("meme_votes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  memeId: integer("meme_id").notNull(),
+  voteType: text("vote_type").notNull(), // 'upvote' or 'downvote'
+});
+
 export const confessions = pgTable("confessions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -75,6 +82,12 @@ export const insertMemeSchema = createInsertSchema(memes).pick({
   tags: true,
 });
 
+export const insertMemeVoteSchema = createInsertSchema(memeVotes).pick({
+  userId: true,
+  memeId: true,
+  voteType: true,
+});
+
 export const insertConfessionSchema = createInsertSchema(confessions).pick({
   userId: true,
   content: true,
@@ -95,12 +108,14 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertMeme = z.infer<typeof insertMemeSchema>;
+export type InsertMemeVote = z.infer<typeof insertMemeVoteSchema>;
 export type InsertConfession = z.infer<typeof insertConfessionSchema>;
 export type InsertQuestion = z.infer<typeof insertQuestionSchema>;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Meme = typeof memes.$inferSelect;
+export type MemeVote = typeof memeVotes.$inferSelect;
 export type Confession = typeof confessions.$inferSelect;
 export type Question = typeof questions.$inferSelect;
 export type Match = typeof matches.$inferSelect;

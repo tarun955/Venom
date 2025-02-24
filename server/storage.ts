@@ -7,6 +7,13 @@ import {
   type ChatMessage, type InsertChatMessage
 } from "@shared/schema";
 
+interface MemeVote {
+  id: number;
+  userId: number;
+  memeId: number;
+  voteType: 'upvote' | 'downvote';
+}
+
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
@@ -19,6 +26,8 @@ export interface IStorage {
   getMemes(): Promise<Meme[]>;
   upvoteMeme(id: number): Promise<Meme | undefined>;
   downvoteMeme(id: number): Promise<Meme | undefined>;
+  getMemeVote(userId: number, memeId: number): Promise<MemeVote | undefined>;
+  voteMeme(userId: number, memeId: number, voteType: 'upvote' | 'downvote'): Promise<Meme | undefined>;
 
   // Confessions
   createConfession(confession: InsertConfession): Promise<Confession>;
@@ -30,6 +39,7 @@ export interface IStorage {
 
   // Matches
   createMatch(user1Id: number, user2Id: number): Promise<Match>;
+  rejectMatch(user1Id: number, user2Id: number): Promise<void>;
   getMatches(userId: number): Promise<Match[]>;
 
   // Chat messages
@@ -44,6 +54,8 @@ export class MemStorage implements IStorage {
   private questions: Map<number, Question>;
   private matches: Map<number, Match>;
   private chatMessages: Map<number, ChatMessage>;
+  private memeVotes: Map<string, MemeVote>;
+  private rejectedMatches: Set<string>;
   private currentIds: { [key: string]: number };
 
   private initializeTestData() {
@@ -142,13 +154,16 @@ export class MemStorage implements IStorage {
     this.questions = new Map();
     this.matches = new Map();
     this.chatMessages = new Map();
+    this.memeVotes = new Map();
+    this.rejectedMatches = new Set();
     this.currentIds = {
       users: 1,
       memes: 1,
       confessions: 1,
       questions: 1,
       matches: 1,
-      chatMessages: 1
+      chatMessages: 1,
+      memeVotes:1
     };
 
     // Initialize test data
@@ -242,10 +257,20 @@ export class MemStorage implements IStorage {
     return match;
   }
 
+  async rejectMatch(user1Id: number, user2Id: number): Promise<void> {
+    const key = `${Math.min(user1Id, user2Id)}-${Math.max(user1Id, user2Id)}`;
+    this.rejectedMatches.add(key);
+  }
+
   async getMatches(userId: number): Promise<Match[]> {
-    return Array.from(this.matches.values()).filter(
-      match => match.user1Id === userId || match.user2Id === userId
-    );
+    return Array.from(this.matches.values()).filter(match => {
+      // Check if this match involves the user
+      if (match.user1Id !== userId && match.user2Id !== userId) return false;
+
+      // Check if this match was rejected
+      const key = `${Math.min(match.user1Id, match.user2Id)}-${Math.max(match.user1Id, match.user2Id)}`;
+      return !this.rejectedMatches.has(key);
+    });
   }
 
   async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
@@ -284,6 +309,43 @@ export class MemStorage implements IStorage {
 
     const updatedMeme = { ...meme, downvotes: (meme.downvotes || 0) + 1 };
     this.memes.set(id, updatedMeme);
+    return updatedMeme;
+  }
+
+  async getMemeVote(userId: number, memeId: number): Promise<MemeVote | undefined> {
+    const key = `${userId}-${memeId}`;
+    return this.memeVotes.get(key);
+  }
+
+  async voteMeme(userId: number, memeId: number, voteType: 'upvote' | 'downvote'): Promise<Meme | undefined> {
+    const meme = this.memes.get(memeId);
+    if (!meme) return undefined;
+
+    const key = `${userId}-${memeId}`;
+    const existingVote = this.memeVotes.get(key);
+
+    if (existingVote) {
+      // User has already voted, no changes allowed
+      return meme;
+    }
+
+    // Record the new vote
+    const voteId = this.currentIds.memeVotes++;
+    const vote: MemeVote = {
+      id: voteId,
+      userId,
+      memeId,
+      voteType,
+    };
+    this.memeVotes.set(key, vote);
+
+    // Update the meme's vote count
+    const updatedMeme = {
+      ...meme,
+      upvotes: voteType === 'upvote' ? (meme.upvotes || 0) + 1 : meme.upvotes || 0,
+      downvotes: voteType === 'downvote' ? (meme.downvotes || 0) + 1 : meme.downvotes || 0,
+    };
+    this.memes.set(memeId, updatedMeme);
     return updatedMeme;
   }
 }

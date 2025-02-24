@@ -76,9 +76,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add upvote/downvote routes
-  app.post("/api/memes/:id/upvote", async (req, res) => {
-    const meme = await storage.upvoteMeme(parseInt(req.params.id));
+  // Updated upvote/downvote routes
+  app.post("/api/memes/:id/:voteType", async (req, res) => {
+    const { id } = req.params;
+    const voteType = req.params.voteType as 'upvote' | 'downvote';
+    const userId = 1; // TODO: Replace with actual user ID from session
+
+    if (voteType !== 'upvote' && voteType !== 'downvote') {
+      res.status(400).json({ message: "Invalid vote type" });
+      return;
+    }
+
+    // Check if user has already voted
+    const existingVote = await storage.getMemeVote(userId, parseInt(id));
+    if (existingVote) {
+      res.status(400).json({ message: "You have already voted on this meme" });
+      return;
+    }
+
+    const meme = await storage.voteMeme(userId, parseInt(id), voteType);
     if (!meme) {
       res.status(404).json({ message: "Meme not found" });
       return;
@@ -86,13 +102,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(meme);
   });
 
-  app.post("/api/memes/:id/downvote", async (req, res) => {
-    const meme = await storage.downvoteMeme(parseInt(req.params.id));
-    if (!meme) {
-      res.status(404).json({ message: "Meme not found" });
-      return;
-    }
-    res.json(meme);
+  // Add reject match route
+  app.post("/api/matches/reject", async (req, res) => {
+    const { user1Id, user2Id } = req.body;
+    await storage.rejectMatch(user1Id, user2Id);
+    res.json({ success: true });
   });
 
 
